@@ -1,0 +1,1428 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数字秘境：科技解谜之旅</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #0f0f1a;
+            color: #00ff88;
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        #game-container {
+            width: 800px;
+            height: 600px;
+            position: relative;
+            background-color: #0a0a12;
+            border: 2px solid #00ff88;
+            border-radius: 5px;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+        }
+        #splash-screen {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(15, 15, 26, 0.9);
+            z-index: 100;
+            transition: opacity 1s;
+        }
+        #title {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px #00ff88;
+            letter-spacing: 3px;
+        }
+        #start-btn {
+            padding: 10px 20px;
+            font-size: 1.2em;
+            background-color: #00ff88;
+            color: #0a0a12;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        #start-btn:hover {
+            background-color: #00cc7a;
+            transform: scale(1.05);
+            box-shadow: 0 0 15px #00ff88;
+        }
+        .loading-bar {
+            width: 300px;
+            height: 20px;
+            background-color: #1a1a2e;
+            border-radius: 10px;
+            margin-top: 30px;
+            overflow: hidden;
+        }
+        .loading-progress {
+            height: 100%;
+            width: 0%;
+            background-color: #00ff88;
+            transition: width 0.3s;
+        }
+        #game-map {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: none;
+            flex-direction: column;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .map-title {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        #main-map {
+            width: 100%;
+            height: 70%;
+            background-color: #0a0a12;
+            border: 1px solid #00ff88;
+            position: relative;
+            overflow: auto;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        .map-node {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(10, 10, 18, 0.8);
+            border: 2px solid #00ff88;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+        }
+        .map-node:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.8);
+        }
+        .map-node-locked {
+            background-color: rgba(26, 26, 46, 0.8);
+            border-color: #555;
+            box-shadow: 0 0 5px rgba(85, 85, 85, 0.5);
+        }
+        .map-node-locked:hover {
+            transform: none;
+            box-shadow: 0 0 5px rgba(85, 85, 85, 0.5);
+        }
+        #game-ui {
+            display: flex;
+            height: 30%;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        #time-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(10, 10, 18, 0.8);
+            border: 1px solid #00ff88;
+            border-radius: 5px;
+            margin-right: 10px;
+            padding: 10px;
+        }
+        #time-display {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+        #time-toggle {
+            padding: 5px 10px;
+            background-color: #00ff88;
+            color: #0a0a12;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        #time-toggle:hover {
+            background-color: #00cc7a;
+        }
+        #clue-panel {
+            flex: 2;
+            background-color: rgba(10, 10, 18, 0.8);
+            border: 1px solid #00ff88;
+            border-radius: 5px;
+            margin-right: 10px;
+            padding: 10px;
+            overflow-y: auto;
+        }
+        #clue-title {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .clue-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            padding: 5px;
+            background-color: rgba(26, 26, 46, 0.8);
+            border-radius: 3px;
+        }
+        .clue-icon {
+            font-size: 1.2em;
+            margin-right: 10px;
+        }
+        .clue-text {
+            font-size: 0.9em;
+        }
+        #achievement-panel {
+            flex: 1;
+            background-color: rgba(10, 10, 18, 0.8);
+            border: 1px solid #00ff88;
+            border-radius: 5px;
+            padding: 10px;
+            overflow-y: auto;
+        }
+        #achievement-title {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .achievement-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            padding: 5px;
+            background-color: rgba(26, 26, 46, 0.8);
+            border-radius: 3px;
+        }
+        .achievement-icon {
+            font-size: 1.2em;
+            margin-right: 10px;
+        }
+        .achievement-text {
+            font-size: 0.9em;
+        }
+        .achievement-locked {
+            opacity: 0.5;
+        }
+        #exploration-screen {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: none;
+            flex-direction: column;
+            background-color: #0a0a12;
+            z-index: 50;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        #exploration-header {
+            height: 10%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 10px;
+        }
+        #location-name {
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+        #back-btn {
+            padding: 5px 10px;
+            background-color: #00ff88;
+            color: #0a0a12;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        #back-btn:hover {
+            background-color: #00cc7a;
+        }
+        #exploration-content {
+            height: 80%;
+            overflow-y: auto;
+            padding: 10px;
+        }
+        .exploration-node {
+            width: 100%;
+            height: 150px;
+            margin-bottom: 20px;
+            background-color: rgba(26, 26, 46, 0.8);
+            border: 1px solid #00ff88;
+            border-radius: 5px;
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+        .node-title {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        .node-icon {
+            font-size: 1.2em;
+            margin-right: 10px;
+        }
+        .node-description {
+            font-size: 0.9em;
+            margin-bottom: 15px;
+            color: #00ffcc;
+        }
+        .node-action {
+            display: flex;
+            justify-content: flex-end;
+        }
+        .action-btn {
+            padding: 5px 15px;
+            background-color: #00ff88;
+            color: #0a0a12;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        .action-btn:hover {
+            background-color: #00cc7a;
+        }
+        .node-completed {
+            border-color: #00cc7a;
+            position: relative;
+        }
+        .node-completed::after {
+            content: "✓";
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 1.5em;
+            color: #00cc7a;
+        }
+        #exploration-footer {
+            height: 10%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #puzzle-screen {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: none;
+            flex-direction: column;
+            background-color: #0a0a12;
+            z-index: 60;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        #puzzle-header {
+            height: 10%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 10px;
+        }
+        #puzzle-title {
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+        #close-puzzle {
+            padding: 5px 10px;
+            background-color: #00ff88;
+            color: #0a0a12;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        #close-puzzle:hover {
+            background-color: #00cc7a;
+        }
+        #puzzle-content {
+            height: 80%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .puzzle-description {
+            width: 80%;
+            font-size: 1em;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #00ffcc;
+        }
+        .puzzle-interface {
+            width: 80%;
+            height: 300px;
+            background-color: rgba(26, 26, 46, 0.8);
+            border: 1px solid #00ff88;
+            border-radius: 5px;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .puzzle-input {
+            width: 100%;
+            height: 50px;
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #puzzle-answer {
+            width: 70%;
+            padding: 8px;
+            font-size: 1em;
+            background-color: #1a1a2e;
+            color: #00ff88;
+            border: 1px solid #00ff88;
+            border-radius: 3px;
+        }
+        #submit-answer {
+            padding: 8px 15px;
+            background-color: #00ff88;
+            color: #0a0a12;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        #submit-answer:hover {
+            background-color: #00cc7a;
+        }
+        #modal {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(10, 10, 18, 0.9);
+            z-index: 200;
+        }
+        .modal-content {
+            width: 60%;
+            height: 40%;
+            background-color: #0a0a12;
+            border: 2px solid #00ff88;
+            border-radius: 5px;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .modal-title {
+            font-size: 1.5em;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .modal-message {
+            font-size: 1em;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #00ffcc;
+        }
+        .modal-btn {
+            padding: 8px 20px;
+            background-color: #00ff88;
+            color: #0a0a12;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            margin: 0 auto;
+            display: block;
+        }
+        .modal-btn:hover {
+            background-color: #00cc7a;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <!-- 加载界面 -->
+        <div id="splash-screen">
+            <div id="title">数字秘境</div>
+            <div id="start-btn">开始探索</div>
+            <div class="loading-bar">
+                <div class="loading-progress" id="loading-bar"></div>
+            </div>
+        </div>
+        
+        <!-- 主地图界面 -->
+        <div id="game-map">
+            <div class="map-title">数字世界地图</div>
+            <div id="main-map">
+                <!-- 主节点 -->
+                <div class="map-node" style="top: 50%; left: 50%;" data-node="main-hub">
+                    🌐
+                </div>
+                <!-- 数据中心节点 -->
+                <div class="map-node" style="top: 30%; left: 30%;" data-node="data-center">
+                    💾
+                </div>
+                <!-- 网络安全节点 -->
+                <div class="map-node" style="top: 30%; left: 70%;" data-node="security-hub">
+                    🔒
+                </div>
+                <!-- 人工智能节点 -->
+                <div class="map-node" style="top: 70%; left: 30%;" data-node="ai-lab">
+                    🤖
+                </div>
+                <!-- 密码学节点 -->
+                <div class="map-node" style="top: 70%; left: 70%;" data-node="crypto-vault">
+                    ⚖️
+                </div>
+                
+                <!-- 连接线 -->
+                <svg width="100%" height="100%" style="position: absolute; top: 0; left: 0; z-index: -1;">
+                    <line x1="50%" y1="50%" x2="30%" y2="30%" stroke="#00ff88" stroke-width="2" stroke-dasharray="5,5"/>
+                    <line x1="50%" y1="50%" x2="70%" y2="30%" stroke="#00ff88" stroke-width="2" stroke-dasharray="5,5"/>
+                    <line x1="50%" y1="50%" x2="30%" y2="70%" stroke="#00ff88" stroke-width="2" stroke-dasharray="5,5"/>
+                    <line x1="50%" y1="50%" x2="70%" y2="70%" stroke="#00ff88" stroke-width="2" stroke-dasharray="5,5"/>
+                </svg>
+            </div>
+            
+            <div id="game-ui">
+                <div id="time-panel">
+                    <div id="time-display">系统时间: 白天</div>
+                    <button id="time-toggle">切换时间</button>
+                </div>
+                
+                <div id="clue-panel">
+                    <div id="clue-title">已收集线索</div>
+                    <div id="clues-container">
+                        <!-- 线索将在这里动态添加 -->
+                    </div>
+                </div>
+                
+                <div id="achievement-panel">
+                    <div id="achievement-title">成就</div>
+                    <div id="achievements-container">
+                        <!-- 成就将在这里动态添加 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 探索界面 -->
+        <div id="exploration-screen">
+            <div id="exploration-header">
+                <div id="location-name">位置名称</div>
+                <button id="back-btn">返回地图</button>
+            </div>
+            <div id="exploration-content">
+                <!-- 探索节点将在这里动态添加 -->
+            </div>
+            <div id="exploration-footer">
+                <!-- 页脚内容 -->
+            </div>
+        </div>
+        
+        <!-- 谜题界面 -->
+        <div id="puzzle-screen">
+            <div id="puzzle-header">
+                <div id="puzzle-title">谜题标题</div>
+                <button id="close-puzzle">关闭</button>
+            </div>
+            <div id="puzzle-content">
+                <div class="puzzle-description" id="puzzle-description">谜题描述将显示在这里</div>
+                <div class="puzzle-interface" id="puzzle-interface">
+                    <!-- 谜题界面将在这里动态添加 -->
+                </div>
+                <div class="puzzle-input">
+                    <input type="text" id="puzzle-answer" placeholder="输入答案">
+                    <button id="submit-answer">提交</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 弹窗 -->
+        <div id="modal">
+            <div class="modal-content">
+                <div class="modal-title" id="modal-title">标题</div>
+                <div class="modal-message" id="modal-message">消息将显示在这里</div>
+                <button class="modal-btn" id="modal-btn">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 游戏状态
+        const gameState = {
+            loaded: false,
+            currentTime: 'day', // 'day' 或 'night'
+            currentLocation: null,
+            clues: [],
+            achievements: [],
+            unlockedNodes: ['main-hub'],
+            explorationProgress: {
+                'main-hub': 0,
+                'data-center': 0,
+                'security-hub': 0,
+                'ai-lab': 0,
+                'crypto-vault': 0
+            },
+            puzzlesSolved: {
+                'main-hub': [],
+                'data-center': [],
+                'security-hub': [],
+                'ai-lab': [],
+                'crypto-vault': []
+            }
+        };
+
+        // 成就数据
+        const achievementsData = [
+            {
+                id: 'hub-explorer',
+                name: '中心枢纽探索者',
+                description: '探索主节点',
+                icon: '🌐',
+                difficulty: 1,
+                hidden: false
+            },
+            {
+                id: 'data-miner',
+                name: '数据矿工',
+                description: '解锁数据中心节点',
+                icon: '💾',
+                difficulty: 1,
+                hidden: false
+            },
+            {
+                id: 'security-guru',
+                name: '安全专家',
+                description: '解锁网络安全节点',
+                icon: '🔒',
+                difficulty: 1,
+                hidden: false
+            },
+            {
+                id: 'ai-pioneer',
+                name: 'AI 先驱',
+                description: '解锁人工智能节点',
+                icon: '🤖',
+                difficulty: 1,
+                hidden: false
+            },
+            {
+                id: 'crypto-master',
+                name: '密码大师',
+                description: '解锁密码学节点',
+                icon: '🔐',
+                difficulty: 1,
+                hidden: false
+            },
+            {
+                id: 'clue-collector',
+                name: '线索收集者',
+                description: '收集5条线索',
+                icon: '🔍',
+                difficulty: 2,
+                hidden: false
+            },
+            {
+                id: 'puzzle-solver',
+                name: '解谜专家',
+                description: '解开5个谜题',
+                icon: '🧩',
+                difficulty: 2,
+                hidden: false
+            },
+            {
+                id: 'night-owl',
+                name: '夜猫子',
+                description: '在夜间探索数字世界',
+                icon: '🌙',
+                difficulty: 2,
+                hidden: true
+            },
+            {
+                id: 'caesar-cracker',
+                name: '凯撒密码破译者',
+                description: '解开凯撒密码谜题',
+                icon: '🔑',
+                difficulty: 3,
+                hidden: false
+            },
+            {
+                id: 'binary-whiz',
+                name: '二进制大师',
+                description: '解开二进制谜题',
+                icon: '1️⃣0️⃣',
+                difficulty: 3,
+                hidden: false
+            },
+            {
+                id: 'regex-ninja',
+                name: '正则表达式忍者',
+                description: '解开正则表达式谜题',
+                icon: '🎯',
+                difficulty: 4,
+                hidden: false
+            },
+            {
+                id: 'rsa-cracker',
+                name: 'RSA 破解者',
+                description: '解开 RSA 密码谜题',
+                icon: '🔒',
+                difficulty: 5,
+                hidden: true
+            },
+            {
+                id: 'quantum-leap',
+                name: '量子飞跃',
+                description: '解开量子计算谜题',
+                icon: '⚛️',
+                difficulty: 5,
+                hidden: true
+            },
+            {
+                id: 'perfect-explorer',
+                name: '完美探索者',
+                description: '探索所有节点',
+                icon: '🏆',
+                difficulty: 5,
+                hidden: true
+            },
+            {
+                id: 'ultimate-solver',
+                name: '终极解谜者',
+                description: '解开所有谜题',
+                icon: '👑',
+                difficulty: 5,
+                hidden: true
+            }
+        ];
+
+        // 线索数据
+        const cluesData = [
+            {
+                id: 'hub-clue-1',
+                name: '网络基础',
+                description: 'IP 地址由四个 0-255 的数字组成，如 192.168.1.1',
+                icon: '🌐'
+            },
+            {
+                id: 'data-clue-1',
+                name: '数据存储',
+                description: '1 TB = 1024 GB = 1,099,511,627,776 字节',
+                icon: '💾'
+            },
+            {
+                id: 'security-clue-1',
+                name: '加密基础',
+                description: '对称加密使用同一把密钥加密和解密数据',
+                icon: '🔒'
+            },
+            {
+                id: 'ai-clue-1',
+                name: '机器学习',
+                description: 'AI 训练需要大量标注数据来提高准确性',
+                icon: '🤖'
+            },
+            {
+                id: 'crypto-clue-1',
+                name: '哈希函数',
+                description: 'SHA-256 生成 64 字符的十六进制哈希值',
+                icon: '🔐'
+            }
+        ];
+
+        // 探索节点数据
+        const explorationNodesData = {
+            'main-hub': [
+                {
+                    id: 'hub-node-1',
+                    title: '网络中心',
+                    description: '这里是数字世界的中心枢纽，连接着各个重要节点。你注意到墙上的显示屏不断闪烁着网络流量数据。',
+                    action: '查看数据流量',
+                    puzzle: {
+                        type: 'caesar',
+                        difficulty: 1,
+                        description: '显示屏上出现了一串加密文字：Uifsf jt b tfdsfu dpefefs ibufdmfjoft. 解密这串文字获取线索。',
+                        answer: 'This is a simple caesar cipher encryption.'
+                    },
+                    clue: 'hub-clue-1',
+                    achievement: 'hub-explorer'
+                },
+                {
+                    id: 'hub-node-2',
+                    title: '信息公告板',
+                    description: '公告板上贴满了各种数字世界的通知。其中一张特别显眼，上面写着"寻找隐藏在网络深处的古老协议...".',
+                    action: '阅读公告',
+                    puzzle: null,
+                    clue: null,
+                    achievement: null
+                }
+            ],
+            'data-center': [
+                {
+                    id: 'dc-node-1',
+                    title: '存储阵列',
+                    description: '一排排服务器闪烁着蓝色光芒，这里存储着数字世界的所有数据。一台服务器上的指示灯异常闪烁。',
+                    action: '检查异常服务器',
+                    puzzle: {
+                        type: 'binary',
+                        difficulty: 2,
+                        description: '服务器屏幕上显示一串二进制代码：01001000 01100101 01101100 01101100 01101111 00100000 01010111 01101111 011100kl. 转换这串二进制获取线索。',
+                        answer: 'Hello World'
+                    },
+                    clue: 'data-clue-1',
+                    achievement: 'data-miner'
+                },
+                {
+                    id: 'dc-node-2',
+                    title: '数据备份站',
+                    description: '这里是数据备份的核心区域，多个磁带存储装置整齐排列。一个装置上的标签似乎被部分擦除。',
+                    action: '检查磁带标签',
+                    puzzle: {
+                        type: 'regex',
+                        difficulty: 3,
+                        description: '标签上残留着部分编号：D[T][A-P]_[0-9]{3}_[A-Z]{3}. 使用正则表达式找出正确的备份编号。',
+                        answer: 'DATA_123_ABC'
+                    },
+                    clue: 'data-clue-2',
+                    achievement: null
+                }
+            ],
+            'security-hub': [
+                {
+                    id: 'sec-node-1',
+                    title: '防火墙控制台',
+                    description: '这里是网络安全的守护者，一台终端屏幕显示着不断尝试入侵的 IP 地址。其中有一个 IP 显得格外异常。',
+                    action: '分析异常 IP',
+                    puzzle: {
+                        type: 'ip-calc',
+                        difficulty: 2,
+                        description: '异常 IP: 192.168.1.255/24. 计算这个 IP 的网络地址、广播地址和可用主机范围。',
+                        answer: 'Network:192.168.1.0 Broadcast:192.168.1.255 Hosts:1-254'
+                    },
+                    clue: 'security-clue-1',
+                    achievement: 'security-guru'
+                },
+                {
+                    id: 'sec-node-2',
+                    title: '入侵检测系统',
+                    description: 'IDS 系统不断发出警报，显示有未知攻击模式。一个可疑文件被拦截，文件名是加密的。',
+                    action: '解密文件名',
+                    puzzle: {
+                        type: 'base64',
+                        difficulty: 3,
+                        description: '加密文件名: QW5jb3Z1cnJhbl9maWxlLnR4dA==. 解码这个 Base64 字符串获取线索。',
+                        answer: 'Ancovurral_file.txt'
+                    },
+                    clue: 'security-clue-2',
+                    achievement: null
+                }
+            ],
+            'ai-lab': [
+                {
+                    id: 'ai-node-1',
+                    title: '机器学习模型',
+                    description: '这里是 AI 研究的核心，多个神经网络模型正在训练中。一个模型的输出日志似乎暗示着什么。',
+                    action: '查看模型日志',
+                    puzzle: {
+                        type: 'sequence',
+                        difficulty: 3,
+                        description: '日志显示一个序列：0, 1, 1, 2, 3, 5, 8, 13, ?. 猜出下一个数字获取线索。',
+                        answer: '21'
+                    },
+                    clue: 'ai-clue-1',
+                    achievement: 'ai-pioneer'
+                },
+                {
+                    id: 'ai-node-2',
+                    title: 'AI 训练数据',
+                    description: '训练数据集存储在这里，一个标注错误的数据样本引起了你的注意。',
+                    action: '检查数据样本',
+                    puzzle: {
+                        type: 'xor',
+                        difficulty: 4,
+                        description: '数据样本显示：XOR 门的输出是 ? 当输入是 1 和 1. 回答这个逻辑问题获取线索。',
+                        answer: '0'
+                    },
+                    clue: 'ai-clue-2',
+                    achievement: null
+                }
+            ],
+            'crypto-vault': [
+                {
+                    id: 'crypto-node-1',
+                    title: '哈希算法展示',
+                    description: '这里展示了各种哈希算法的工作原理。一个演示屏幕上的 MD5 哈希值似乎有问题。',
+                    action: '检查哈希值',
+                    puzzle: {
+                        type: 'md5',
+                        difficulty: 3,
+                        description: '哈希值: 68e1f5a3f9f8c9f8c9f8c9f8c9f8c9f8. 找出这个 MD5 哈希对应的原始文本。',
+                        answer: 'password123'
+                    },
+                    clue: 'crypto-clue-1',
+                    achievement: 'crypto-master'
+                },
+                {
+                    id: 'crypto-node-2',
+                    title: 'RSA 加密演示',
+                    description: 'RSA 加密算法的演示终端上，一个加密后的消息等待解密。',
+                    action: '解密 RSA 消息',
+                    puzzle: {
+                        type: 'rsa',
+                        difficulty: 5,
+                        description: '加密消息: 123456. 使用公钥 (e=3, n=3233) 和私钥 (d=2753) 解密这个消息。',
+                        answer: 'HELLO'
+                    },
+                    clue: 'crypto-clue-2',
+                    achievement: 'rsa-cracker'
+                }
+            ]
+        };
+
+        // 初始化函数
+        function initGame() {
+            // 加载动画
+            const loadingBar = document.getElementById('loading-bar');
+            let loadInterval = setInterval(() => {
+                const width = parseInt(loadingBar.style.width || '0%') + 5;
+                loadingBar.style.width = `${width}%`;
+                if (width >= 100) {
+                    clearInterval(loadInterval);
+                    setTimeout(() => {
+                        document.getElementById('splash-screen').style.opacity = '0';
+                        setTimeout(() => {
+                            document.getElementById('splash-screen').style.display = 'none';
+                            document.getElementById('game-map').style.display = 'flex';
+                            gameState.loaded = true;
+                            updateMapDisplay();
+                            updateUI();
+                        }, 500);
+                    }, 500);
+                }
+            }, 200);
+
+            // 开始按钮点击事件
+            document.getElementById('start-btn').addEventListener('click', () => {
+                document.getElementById('start-btn').disabled = true;
+                // 模拟加载过程
+                const loadingBar = document.getElementById('loading-bar');
+                let width = 0;
+                const loadInterval = setInterval(() => {
+                    width += 5;
+                    loadingBar.style.width = `${width}%`;
+                    if (width >= 100) {
+                        clearInterval(loadInterval);
+                        setTimeout(() => {
+                            document.getElementById('splash-screen').style.opacity = '0';
+                            setTimeout(() => {
+                                document.getElementById('splash-screen').style.display = 'none';
+                                document.getElementById('game-map').style.display = 'flex';
+                                gameState.loaded = true;
+                                updateMapDisplay();
+                                updateUI();
+                            }, 500);
+                        }, 500);
+                    }
+                }, 100);
+            });
+
+            // 时间切换按钮
+            document.getElementById('time-toggle').addEventListener('click', () => {
+                gameState.currentTime = gameState.currentTime === 'day' ? 'night' : 'day';
+                document.getElementById('time-display').textContent = `系统时间: ${gameState.currentTime === 'day' ? '白天' : '夜晚'}`;
+                checkAchievement('night-owl');
+                updateUI();
+            });
+
+            // 返回地图按钮
+            document.getElementById('back-btn').addEventListener('click', () => {
+                document.getElementById('exploration-screen').style.display = 'none';
+                document.getElementById('game-map').style.display = 'flex';
+                gameState.currentLocation = null;
+                updateMapDisplay();
+            });
+
+            // 关闭谜题按钮
+            document.getElementById('close-puzzle').addEventListener('click', () => {
+                document.getElementById('puzzle-screen').style.display = 'none';
+                document.getElementById('exploration-screen').style.display = 'flex';
+            });
+
+            // 提交答案按钮
+            document.getElementById('submit-answer').addEventListener('click', () => {
+                const answer = document.getElementById('puzzle-answer').value.trim();
+                const currentPuzzle = getCurrentPuzzle();
+                if (answer.toLowerCase() === currentPuzzle.answer.toLowerCase()) {
+                    // 回答正确
+                    solvePuzzle(answer);
+                } else {
+                    // 回答错误
+                    showModal('错误', '答案不正确，请重试。', () => {
+                        document.getElementById('puzzle-answer').value = '';
+                        document.getElementById('puzzle-answer').focus();
+                    });
+                }
+            });
+
+            // 模态框按钮
+            document.getElementById('modal-btn').addEventListener('click', () => {
+                document.getElementById('modal').style.display = 'none';
+            });
+
+            // 初始化地图节点点击事件
+            initMapNodes();
+
+            // 初始化成就显示
+            updateAchievements();
+
+            // 初始化线索显示
+            updateClues();
+        }
+
+        // 初始化地图节点点击事件
+        function initMapNodes() {
+            const nodes = document.querySelectorAll('.map-node');
+            nodes.forEach(node => {
+                node.addEventListener('click', () => {
+                    const nodeId = node.getAttribute('data-node');
+                    if (!gameState.unlockedNodes.includes(nodeId) && nodeId !== 'main-hub') {
+                        // 节点未解锁
+                        showModal('节点锁定', '这个节点尚未解锁，探索其他区域获取线索。', () => {
+                            // 无操作
+                        });
+                        return;
+                    }
+                    // 进入探索模式
+                    enterExplorationMode(nodeId);
+                });
+            });
+        }
+
+        // 进入探索模式
+        function enterExplorationMode(nodeId) {
+            gameState.currentLocation = nodeId;
+            document.getElementById('game-map').style.display = 'none';
+            document.getElementById('exploration-screen').style.display = 'flex';
+            document.getElementById('location-name').textContent = getNodeType(nodeId);
+            
+            // 加载探索节点
+            loadExplorationNodes(nodeId);
+        }
+
+        // 获取节点类型名称
+        function getNodeType(nodeId) {
+            const types = {
+                'main-hub': '中心枢纽',
+                'data-center': '数据中心',
+                'security-hub': '网络安全中心',
+                'ai-lab': 'AI 实验室',
+                'crypto-vault': '密码学金库'
+            };
+            return types[nodeId] || '未知区域';
+        }
+
+        // 加载探索节点
+        function loadExplorationNodes(nodeId) {
+            const explorationContent = document.getElementById('exploration-content');
+            explorationContent.innerHTML = '';
+            
+            const nodes = explorationNodesData[nodeId];
+            if (!nodes) return;
+            
+            nodes.forEach(node => {
+                const nodeEl = document.createElement('div');
+                nodeEl.className = `exploration-node ${gameState.puzzlesSolved[nodeId] && gameState.puzzlesSolved[nodeId].includes(node.id) ? 'node-completed' : ''}`;
+                
+                const titleEl = document.createElement('div');
+                titleEl.className = 'node-title';
+                titleEl.innerHTML = `<span class="node-icon">🔍</span>${node.title}`;
+                
+                const descEl = document.createElement('div');
+                descEl.className = 'node-description';
+                descEl.textContent = node.description;
+                
+                const actionEl = document.createElement('div');
+                actionEl.className = 'node-action';
+                
+                if (node.puzzle) {
+                    if (!gameState.puzzlesSolved[nodeId] || !gameState.puzzlesSolved[nodeId].includes(node.id)) {
+                        const btn = document.createElement('button');
+                        btn.className = 'action-btn';
+                        btn.textContent = node.action;
+                        btn.addEventListener('click', () => {
+                            openPuzzle(node.puzzle, node.id, nodeId, node.clue, node.achievement);
+                        });
+                        actionEl.appendChild(btn);
+                    }
+                } else {
+                    const btn = document.createElement('button');
+                    btn.className = 'action-btn';
+                    btn.textContent = node.action;
+                    btn.addEventListener('click', () => {
+                        showModal('信息', node.description, () => {
+                            // 无操作
+                        });
+                    });
+                    actionEl.appendChild(btn);
+                }
+                
+                nodeEl.appendChild(titleEl);
+                nodeEl.appendChild(descEl);
+                nodeEl.appendChild(actionEl);
+                explorationContent.appendChild(nodeEl);
+            });
+        }
+
+        // 打开谜题
+        function openPuzzle(puzzleData, puzzleId, nodeId, clueId, achievementId) {
+            document.getElementById('exploration-screen').style.display = 'none';
+            document.getElementById('puzzle-screen').style.display = 'flex';
+            
+            document.getElementById('puzzle-title').textContent = puzzleData.description.split('.')[0];
+            document.getElementById('puzzle-description').textContent = puzzleData.description;
+            
+            // 根据谜题类型设置界面
+            setupPuzzleInterface(puzzleData.type, puzzleData.difficulty);
+            
+            // 保存当前谜题信息
+            currentPuzzleInfo = {
+                id: puzzleId,
+                nodeId: nodeId,
+                clueId: clueId,
+                achievementId: achievementId
+            };
+            
+            // 清空答案输入框
+            document.getElementById('puzzle-answer').value = '';
+            document.getElementById('puzzle-answer').focus();
+        }
+
+        // 设置谜题界面
+        function setupPuzzleInterface(type, difficulty) {
+            const puzzleInterface = document.getElementById('puzzle-interface');
+            puzzleInterface.innerHTML = '';
+            
+            // 添加难度指示器
+            const difficultyEl = document.createElement('div');
+            difficultyEl.style.textAlign = 'center';
+            difficultyEl.style.marginBottom = '15px';
+            difficultyEl.innerHTML = `难度: ${'★'.repeat(difficulty)}`;
+            puzzleInterface.appendChild(difficultyEl);
+            
+            // 根据谜题类型设置不同界面
+            switch(type) {
+                case 'caesar':
+                    const caesarEl = document.createElement('div');
+                    caesarEl.style.textAlign = 'center';
+                    caesarEl.style.fontSize = '1.2em';
+                    caesarEl.style.fontFamily = '"Courier New", monospace';
+                    caesarEl.innerHTML = 'Uifsf jt b tfdsfu dpefefs ibufdmfjoft.';
+                    puzzleInterface.appendChild(caesarEl);
+                    break;
+                case 'binary':
+                    const binaryEl = document.createElement('div');
+                    binaryEl.style.textAlign = 'center';
+                    binaryEl.style.fontSize = '1.2em';
+                    binaryEl.style.fontFamily = '"Courier New", monospace';
+                    binaryEl.innerHTML = '01001000 01100101 01101100 01101100 01101111 00100000 01010111 01101111 011100kl';
+                    puzzleInterface.appendChild(binaryEl);
+                    break;
+                case 'regex':
+                    const regexEl = document.createElement('div');
+                    regexEl.style.textAlign = 'center';
+                    regexEl.style.fontSize = '1.2em';
+                    regexEl.style.fontFamily = '"Courier New", monospace';
+                    regexEl.innerHTML = 'D[T][A-P]_[0-9]{3}_[A-Z]{3}';
+                    puzzleInterface.appendChild(regexEl);
+                    break;
+                case 'ip-calc':
+                    const ipEl = document.createElement('div');
+                    ipEl.style.textAlign = 'center';
+                    ipEl.style.fontSize = '1.2em';
+                    ipEl.style.fontFamily = '"Courier New", monospace';
+                    ipEl.innerHTML = '192.168.1.255/24';
+                    puzzleInterface.appendChild(ipEl);
+                    break;
+                case 'base64':
+                    const base64El = document.createElement('div');
+                    base64El.style.textAlign = 'center';
+                    base64El.style.fontSize = '1.2em';
+                    base64El.style.fontFamily = '"Courier New", monospace';
+                    base64El.innerHTML = 'QW5jb3Z1cnJhbl9maWxlLnR4dA==';
+                    puzzleInterface.appendChild(base64El);
+                    break;
+                case 'sequence':
+                    const sequenceEl = document.createElement('div');
+                    sequenceEl.style.textAlign = 'center';
+                    sequenceEl.style.fontSize = '1.2em';
+                    sequenceEl.style.fontFamily = '"Courier New", monospace';
+                    sequenceEl.innerHTML = '0, 1, 1, 2, 3, 5, 8, 13, ?';
+                    puzzleInterface.appendChild(sequenceEl);
+                    break;
+                case 'xor':
+                    const xorEl = document.createElement('div');
+                    xorEl.style.textAlign = 'center';
+                    xorEl.style.fontSize = '1.2em';
+                    xorEl.style.fontFamily = '"Courier New", monospace';
+                    xorEl.innerHTML = 'XOR 门的输出是 ? 当输入是 1 和 1';
+                    puzzleInterface.appendChild(xorEl);
+                    break;
+                case 'md5':
+                    const md5El = document.createElement('div');
+                    md5El.style.textAlign = 'center';
+                    md5El.style.fontSize = '1.2em';
+                    md5El.style.fontFamily = '"Courier New", monospace';
+                    md5El.innerHTML = '68e1f5a3f9f8c9f8c9f8c9f8c9f8c9f8';
+                    puzzleInterface.appendChild(md5El);
+                    break;
+                case 'rsa':
+                    const rsaEl = document.createElement('div');
+                    rsaEl.style.textAlign = 'center';
+                    rsaEl.style.fontSize = '1.2em';
+                    rsaEl.style.fontFamily = '"Courier New", monospace';
+                    rsaEl.innerHTML = '加密消息: 123456<br>公钥 (e=3, n=3233)<br>私钥 (d=2753)';
+                    rsaEl.innerHTML = rsaEl.innerHTML.replace(/\n/g, '<br>');
+                    puzzleInterface.appendChild(rsaEl);
+                    break;
+                default:
+                    const defaultEl = document.createElement('div');
+                    defaultEl.style.textAlign = 'center';
+                    defaultEl.style.fontSize = '1.2em';
+                    defaultEl.style.fontFamily = '"Courier New", monospace';
+                    defaultEl.textContent = '请根据提示回答问题';
+                    puzzleInterface.appendChild(defaultEl);
+            }
+        }
+
+        // 解决谜题
+        function solvePuzzle(answer) {
+            const { id, nodeId, clueId, achievementId } = currentPuzzleInfo;
+            
+            // 添加谜题到已解决列表
+            if (!gameState.puzzlesSolved[nodeId]) {
+                gameState.puzzlesSolved[nodeId] = [];
+            }
+            gameState.puzzlesSolved[nodeId].push(id);
+            
+            // 如果有线索，添加线索
+            if (clueId) {
+                const clue = cluesData.find(c => c.id === clueId);
+                if (clue && !gameState.clues.includes(clueId)) {
+                    gameState.clues.push(clueId);
+                    showModal('恭喜', `你解开了谜题并获得了线索: ${clue.name}`, () => {
+                        document.getElementById('puzzle-screen').style.display = 'none';
+                        document.getElementById('exploration-screen').style.display = 'flex';
+                        updateClues();
+                        checkAchievement('clue-collector');
+                        checkAchievement('puzzle-solver');
+                    });
+                } else {
+                    showModal('恭喜', '你解开了谜题!', () => {
+                        document.getElementById('puzzle-screen').style.display = 'none';
+                        document.getElementById('exploration-screen').style.display = 'flex';
+                        checkAchievement('puzzle-solver');
+                    });
+                }
+            } else {
+                showModal('恭喜', '你解开了谜题!', () => {
+                    document.getElementById('puzzle-screen').style.display = 'none';
+                    document.getElementById('exploration-screen').style.display = 'flex';
+                    checkAchievement('puzzle-solver');
+                });
+            }
+            
+            // 如果有成就，解锁成就
+            if (achievementId) {
+                unlockAchievement(achievementId);
+            }
+            
+            // 更新探索界面
+            loadExplorationNodes(nodeId);
+        }
+
+        // 显示模态框
+        function showModal(title, message, callback) {
+            document.getElementById('modal-title').textContent = title;
+            document.getElementById('modal-message').textContent = message;
+            document.getElementById('modal').style.display = 'flex';
+            
+            // 设置回调
+            const modalBtn = document.getElementById('modal-btn');
+            const originalCallback = modalBtn.onclick;
+            modalBtn.onclick = function() {
+                if (originalCallback) originalCallback.call(this);
+                if (callback) callback();
+            };
+        }
+
+        // 解锁成就
+        function unlockAchievement(achievementId) {
+            if (!gameState.achievements.includes(achievementId)) {
+                gameState.achievements.push(achievementId);
+                
+                // 显示成就获得通知
+                setTimeout(() => {
+                    const achievement = achievementsData.find(a => a.id === achievementId);
+                    if (achievement) {
+                        showModal('成就解锁', `你获得了成就: ${achievement.name}<br>${achievement.description}`, () => {
+                            updateAchievements();
+                        });
+                    }
+                }, 500);
+                
+                // 检查是否解锁了所有成就
+                checkPerfectExplorer();
+            }
+        }
+
+        // 检查是否解锁所有节点
+        function checkPerfectExplorer() {
+            const allNodes = ['main-hub', 'data-center', 'security-hub', 'ai-lab', 'crypto-vault'];
+            const allUnlocked = allNodes.every(node => gameState.unlockedNodes.includes(node));
+            if (allUnlocked && !gameState.achievements.includes('perfect-explorer')) {
+                unlockAchievement('perfect-explorer');
+            }
+        }
+
+        // 检查成就条件
+        function checkAchievement(achievementId) {
+            const achievement = achievementsData.find(a => a.id === achievementId);
+            if (!achievement || gameState.achievements.includes(achievementId)) return;
+            
+            switch(achievementId) {
+                case 'clue-collector':
+                    if (gameState.clues.length >= 5) {
+                        unlockAchievement(achievementId);
+                    }
+                    break;
+                case 'puzzle-solver':
+                    let totalPuzzles = 0;
+                    for (const node in gameState.puzzlesSolved) {
+                        if (gameState.puzzlesSolved[node]) {
+                            totalPuzzles += gameState.puzzlesSolved[node].length;
+                        }
+                    }
+                    if (totalPuzzles >= 5) {
+                        unlockAchievement(achievementId);
+                    }
+                    break;
+                case 'night-owl':
+                    if (gameState.currentTime === 'night') {
+                        unlockAchievement(achievementId);
+                    }
+                    break;
+                default:
+                    // 其他成就条件检查
+                    break;
+            }
+        }
+
+        // 更新成就显示
+        function updateAchievements() {
+            const achievementsContainer = document.getElementById('achievements-container');
+            achievementsContainer.innerHTML = '';
+            
+            achievementsData.forEach(achievement => {
+                const hasAchievement = gameState.achievements.includes(achievement.id);
+                const isUnlocked = hasAchievement || !achievement.hidden;
+                
+                if (isUnlocked) {
+                    const achievementEl = document.createElement('div');
+                    achievementEl.className = `achievement-item ${hasAchievement ? '' : 'achievement-locked'}`;
+                    
+                    const iconEl = document.createElement('div');
+                    iconEl.className = 'achievement-icon';
+                    iconEl.textContent = achievement.icon;
+                    
+                    const textEl = document.createElement('div');
+                    textEl.className = 'achievement-text';
+                    textEl.innerHTML = `${achievement.name} ${'★'.repeat(achievement.difficulty)}`;
+                    
+                    achievementEl.appendChild(iconEl);
+                    achievementEl.appendChild(textEl);
+                    achievementsContainer.appendChild(achievementEl);
+                }
+            });
+        }
+
+        // 更新线索显示
+        function updateClues() {
+            const cluesContainer = document.getElementById('clues-container');
+            cluesContainer.innerHTML = '';
+            
+            gameState.clues.forEach(clueId => {
+                const clue = cluesData.find(c => c.id === clueId);
+                if (clue) {
+                    const clueEl = document.createElement('div');
+                    clueEl.className = 'clue-item';
+                    
+                    const iconEl = document.createElement('div');
+                    iconEl.className = 'clue-icon';
+                    iconEl.textContent = clue.icon;
+                    
+                    const textEl = document.createElement('div');
+                    textEl.className = 'clue-text';
+                    textEl.innerHTML = `${clue.name}: ${clue.description}`;
+                    
+                    clueEl.appendChild(iconEl);
+                    clueEl.appendChild(textEl);
+                    cluesContainer.appendChild(clueEl);
+                }
+            });
+        }
+
+        // 更新地图显示
+        function updateMapDisplay() {
+            const nodes = document.querySelectorAll('.map-node');
+            nodes.forEach(node => {
+                const nodeId = node.getAttribute('data-node');
+                if (gameState.unlockedNodes.includes(nodeId)) {
+                    node.classList.remove('map-node-locked');
+                } else {
+                    node.classList.add('map-node-locked');
+                }
+            });
+            
+            // 更新时间显示
+            document.getElementById('time-display').textContent = `系统时间: ${gameState.currentTime === 'day' ? '白天' : '夜晚'}`;
+        }
+
+        // 更新用户界面
+        function updateUI() {
+            updateMapDisplay();
+            updateAchievements();
+            updateClues();
+        }
+
+        // 获取当前谜题信息
+        let currentPuzzleInfo = null;
+
+        // 获取当前谜题
+        function getCurrentPuzzle() {
+            const { nodeId, id } = currentPuzzleInfo;
+            if (!nodeId || !id || !explorationNodesData[nodeId]) return null;
+            
+            const node = explorationNodesData[nodeId].find(n => n.id === id);
+            if (!node || !node.puzzle) return null;
+            
+            return node.puzzle;
+        }
+
+        // 页面加载完成后初始化游戏
+        window.addEventListener('load', initGame);
+    </script>
+</body>
+</html>
