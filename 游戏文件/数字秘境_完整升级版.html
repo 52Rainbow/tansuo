@@ -1,0 +1,2151 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数字秘境：终极科技解谜之旅</title>
+    <style>
+        /* 基础样式 */
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #0f0f1a;
+            color: #00ff88;
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            min-height: 600px;
+        }
+        
+        #game-container {
+            width: min(95vw, 1000px);
+            height: min(95vh, 750px);
+            position: relative;
+            background: linear-gradient(135deg, #0a0a12 0%, #1a1a2e 100%);
+            border: 2px solid #00ff88;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 0 30px rgba(0, 255, 136, 0.4);
+        }
+        
+        /* 矩阵背景效果 */
+        #matrix-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            opacity: 0.12;
+            overflow: hidden;
+        }
+        
+        /* 加载界面 */
+        #splash-screen {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: radial-gradient(circle, rgba(15, 15, 26, 0.95) 0%, rgba(10, 10, 18, 0.98) 100%);
+            z-index: 100;
+            transition: opacity 1s ease;
+        }
+        
+        #title {
+            font-size: clamp(1.8em, 4vw, 3em);
+            margin-bottom: 30px;
+            text-shadow: 0 0 15px #00ff88, 0 0 30px #00ff88;
+            letter-spacing: 3px;
+            animation: pulse 2s infinite ease-in-out;
+            text-align: center;
+            padding: 0 20px;
+        }
+        
+        #subtitle {
+            font-size: 1.2em;
+            margin-bottom: 40px;
+            color: #00cc7a;
+            text-align: center;
+            opacity: 0.8;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { 
+                transform: scale(1);
+                text-shadow: 0 0 15px #00ff88, 0 0 30px #00ff88;
+            }
+            50% { 
+                transform: scale(1.05);
+                text-shadow: 0 0 20px #00ff88, 0 0 40px #00ff88, 0 0 60px #00ff88;
+            }
+        }
+        
+        .game-btn {
+            padding: 15px 30px;
+            font-size: 1.2em;
+            background: linear-gradient(45deg, #00ff88, #00cc7a);
+            color: #0a0a12;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px;
+            font-weight: bold;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3);
+        }
+        
+        .game-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 255, 136, 0.5);
+        }
+        
+        .game-btn:active {
+            transform: translateY(0);
+        }
+        
+        .game-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .game-btn:hover::before {
+            left: 100%;
+        }
+        
+        /* 主游戏界面 */
+        #main-interface {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: none;
+            background: transparent;
+        }
+        
+        /* 顶部状态栏 */
+        #status-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.1) 0%, rgba(0, 255, 136, 0.05) 100%);
+            border-bottom: 1px solid rgba(0, 255, 136, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            z-index: 10;
+        }
+        
+        #progress-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .progress-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+            color: #00ff88;
+        }
+        
+        #controls {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .control-btn {
+            padding: 8px 15px;
+            font-size: 0.9em;
+            background: rgba(0, 255, 136, 0.1);
+            color: #00ff88;
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .control-btn:hover {
+            background: rgba(0, 255, 136, 0.2);
+            border-color: #00ff88;
+        }
+        
+        /* 左侧面板 */
+        #left-panel {
+            position: absolute;
+            left: 0;
+            top: 60px;
+            bottom: 0;
+            width: 250px;
+            background: linear-gradient(135deg, rgba(15, 15, 26, 0.9) 0%, rgba(10, 10, 18, 0.95) 100%);
+            border-right: 1px solid rgba(0, 255, 136, 0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .panel-tab {
+            display: flex;
+            background: rgba(0, 255, 136, 0.05);
+            border-bottom: 1px solid rgba(0, 255, 136, 0.2);
+        }
+        
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            background: transparent;
+            color: #00ff88;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9em;
+        }
+        
+        .tab-btn.active {
+            background: rgba(0, 255, 136, 0.1);
+            border-bottom: 2px solid #00ff88;
+        }
+        
+        .tab-btn:hover {
+            background: rgba(0, 255, 136, 0.08);
+        }
+        
+        .panel-content {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: none;
+        }
+        
+        .panel-content.active {
+            display: block;
+        }
+        
+        /* 成就墙样式 */
+        #achievement-wall {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 12px;
+            padding: 15px;
+        }
+        
+        .achievement-badge {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            overflow: hidden;
+        }
+        
+        .achievement-badge.unlocked {
+            background: linear-gradient(135deg, #ffd700, #ffed4e);
+            border-color: #ffd700;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+        }
+        
+        .achievement-badge.locked {
+            background: linear-gradient(135deg, #333, #555);
+            border-color: #666;
+            opacity: 0.6;
+        }
+        
+        .achievement-badge:hover {
+            transform: scale(1.1);
+            z-index: 10;
+        }
+        
+        .achievement-icon {
+            font-size: 2em;
+            margin-bottom: 5px;
+        }
+        
+        .achievement-name {
+            font-size: 0.7em;
+            text-align: center;
+            color: #333;
+            font-weight: bold;
+        }
+        
+        .achievement-badge.locked .achievement-name {
+            color: #999;
+        }
+        
+        /* 升级的成就面板 */
+        #achievement-panel {
+            padding: 0;
+        }
+        
+        #achievement-title {
+            font-size: 1.2em;
+            color: #00ff88;
+            margin-bottom: 15px;
+            text-align: center;
+            text-shadow: 0 0 10px #00ff88;
+        }
+        
+        .achievement-stats {
+            background: rgba(0, 255, 136, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .achievement-progress {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(0, 255, 136, 0.2);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88, #00cc7a);
+            transition: width 0.5s ease;
+        }
+        
+        /* 游戏地图区域 */
+        #game-area {
+            position: absolute;
+            left: 250px;
+            top: 60px;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(ellipse at center, rgba(0, 255, 136, 0.03) 0%, rgba(0, 0, 0, 0.1) 100%);
+            overflow: hidden;
+        }
+        
+        /* 网络地图 */
+        #network-map {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            padding: 20px;
+        }
+        
+        .node {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid #00ff88;
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.1) 0%, rgba(0, 255, 136, 0.05) 100%);
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+        }
+        
+        .node:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 30px rgba(0, 255, 136, 0.6);
+        }
+        
+        .node.unlocked {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.2) 0%, rgba(0, 255, 136, 0.1) 100%);
+            border-color: #00ff88;
+        }
+        
+        .node.completed {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.3) 0%, rgba(255, 215, 0, 0.1) 100%);
+            border-color: #ffd700;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+        }
+        
+        .node.locked {
+            background: linear-gradient(135deg, rgba(100, 100, 100, 0.2) 0%, rgba(100, 100, 100, 0.1) 100%);
+            border-color: #666;
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .node-icon {
+            font-size: 1.8em;
+            margin-bottom: 2px;
+        }
+        
+        .node-label {
+            font-size: 0.7em;
+            text-align: center;
+            color: #00ff88;
+        }
+        
+        /* 连接线 */
+        .connection {
+            position: absolute;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #00ff88, transparent);
+            transform-origin: left center;
+            opacity: 0.6;
+            z-index: -1;
+        }
+        
+        .connection.unlocked {
+            opacity: 1;
+            animation: pulse-line 2s infinite ease-in-out;
+        }
+        
+        @keyframes pulse-line {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+        
+        /* 弹出框 */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: linear-gradient(135deg, #1a1a2e 0%, #0f0f1a 100%);
+            border: 2px solid #00ff88;
+            border-radius: 10px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 0 50px rgba(0, 255, 136, 0.3);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(0, 255, 136, 0.3);
+            padding-bottom: 15px;
+        }
+        
+        .modal-title {
+            font-size: 1.5em;
+            color: #00ff88;
+            text-shadow: 0 0 10px #00ff88;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            color: #00ff88;
+            font-size: 1.5em;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 3px;
+            transition: all 0.3s ease;
+        }
+        
+        .close-btn:hover {
+            background: rgba(255, 0, 0, 0.2);
+            color: #ff4444;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            #game-container {
+                width: 100vw;
+                height: 100vh;
+                border-radius: 0;
+            }
+            
+            #left-panel {
+                width: 200px;
+            }
+            
+            #game-area {
+                left: 200px;
+            }
+            
+            .achievement-badge {
+                width: 80px;
+                height: 80px;
+            }
+            
+            .node {
+                width: 60px;
+                height: 60px;
+            }
+        }
+        
+        /* 新增的加载动画 */
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(0, 255, 136, 0.3);
+            border-top: 4px solid #00ff88;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* 成就通知动画 */
+        .achievement-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #ffd700, #ffed4e);
+            color: #333;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(255, 215, 0, 0.4);
+            z-index: 2000;
+            transform: translateX(400px);
+            transition: transform 0.5s ease;
+            max-width: 300px;
+        }
+        
+        .achievement-notification.show {
+            transform: translateX(0);
+        }
+        
+        .achievement-notification .title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        /* 粒子效果 */
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: #00ff88;
+            border-radius: 50%;
+            animation: float 3s infinite ease-in-out;
+            opacity: 0.7;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0) translateX(0); }
+            25% { transform: translateY(-20px) translateX(10px); }
+            50% { transform: translateY(-40px) translateX(-5px); }
+            75% { transform: translateY(-20px) translateX(-10px); }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <!-- 矩阵背景效果 -->
+        <div id="matrix-background"></div>
+        
+        <!-- 加载界面 -->
+        <div id="splash-screen">
+            <div id="title">数字秘境</div>
+            <div id="subtitle">终极科技解谜之旅</div>
+            <button class="game-btn" onclick="startGame()">🚀 开始冒险</button>
+            <button class="game-btn" onclick="showInstructions()">📖 游戏指南</button>
+            <button class="game-btn" onclick="showAchievementWall()">🏆 成就墙</button>
+        </div>
+        
+        <!-- 主游戏界面 -->
+        <div id="main-interface">
+            <!-- 顶部状态栏 -->
+            <div id="status-bar">
+                <div id="progress-info">
+                    <div class="progress-item">
+                        <span>🎯</span>
+                        <span>节点: <span id="nodes-progress">0/6</span></span>
+                    </div>
+                    <div class="progress-item">
+                        <span>🔍</span>
+                        <span>线索: <span id="clues-progress">0/8</span></span>
+                    </div>
+                    <div class="progress-item">
+                        <span>🏆</span>
+                        <span>成就: <span id="achievements-progress">0/15</span></span>
+                    </div>
+                </div>
+                <div id="controls">
+                    <button class="control-btn" onclick="toggleSound()">🔊</button>
+                    <button class="control-btn" onclick="showStats()">📊</button>
+                    <button class="control-btn" onclick="showExportMenu()">📤</button>
+                    <button class="control-btn" onclick="showHelp()">❓</button>
+                    <button class="control-btn" onclick="returnToMenu()">🏠</button>
+                </div>
+            </div>
+            
+            <!-- 左侧面板 -->
+            <div id="left-panel">
+                <div class="panel-tab">
+                    <button class="tab-btn active" onclick="switchTab('achievement')">🏆 成就</button>
+                    <button class="tab-btn" onclick="switchTab('clues')">🔍 线索</button>
+                    <button class="tab-btn" onclick="switchTab('progress')">📈 进度</button>
+                </div>
+                
+                <!-- 成就面板 -->
+                <div id="achievement-panel" class="panel-content active">
+                    <div id="achievement-title">🏆 成就系统</div>
+                    <div class="achievement-stats">
+                        <div class="achievement-progress">
+                            <span>完成度</span>
+                            <span id="achievement-percentage">0%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="achievement-progress-bar"></div>
+                        </div>
+                    </div>
+                    <div id="achievement-wall"></div>
+                </div>
+                
+                <!-- 线索面板 -->
+                <div id="clues-panel" class="panel-content">
+                    <div style="font-size: 1.1em; color: #00ff88; margin-bottom: 15px; text-align: center;">🔍 收集的线索</div>
+                    <div id="clues-container"></div>
+                </div>
+                
+                <!-- 进度面板 -->
+                <div id="progress-panel" class="panel-content">
+                    <div style="font-size: 1.1em; color: #00ff88; margin-bottom: 15px; text-align: center;">📈 探索进度</div>
+                    <div id="progress-container"></div>
+                </div>
+            </div>
+            
+            <!-- 游戏区域 -->
+            <div id="game-area">
+                <div id="network-map"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 弹出框 -->
+    <div id="node-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modal-title">节点信息</h2>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+    
+    <div id="achievement-wall-modal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h2 class="modal-title">🏆 成就墙</h2>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div id="achievement-wall-content"></div>
+        </div>
+    </div>
+    
+    <div id="instructions-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">📖 游戏指南</h2>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div id="instructions-content"></div>
+        </div>
+    </div>
+
+    <script>
+        // 游戏状态
+        let gameState = {
+            unlockedNodes: ['main-hub'],
+            completedNodes: [],
+            clues: [],
+            achievements: [],
+            currentNode: null,
+            soundEnabled: true,
+            startTime: null,
+            lastPlayTime: null
+        };
+
+        // 升级的成就数据
+        const achievementsData = [
+            // 基础成就
+            {
+                id: 'first-step',
+                name: '第一步',
+                description: '开始你的数字冒险',
+                icon: '👶',
+                difficulty: 1,
+                hidden: false,
+                type: 'basic'
+            },
+            {
+                id: 'hub-explorer',
+                name: '中心枢纽探索者',
+                description: '探索主节点并完成第一个谜题',
+                icon: '🌐',
+                difficulty: 1,
+                hidden: false,
+                type: 'basic'
+            },
+            {
+                id: 'data-miner',
+                name: '数据矿工',
+                description: '成功解锁并探索数据中心节点',
+                icon: '💾',
+                difficulty: 2,
+                hidden: false,
+                type: 'exploration'
+            },
+            {
+                id: 'security-guru',
+                name: '安全专家',
+                description: '破解网络安全节点的防护系统',
+                icon: '🔒',
+                difficulty: 2,
+                hidden: false,
+                type: 'exploration'
+            },
+            {
+                id: 'ai-pioneer',
+                name: 'AI 先驱',
+                description: '进入人工智能节点的核心',
+                icon: '🤖',
+                difficulty: 2,
+                hidden: false,
+                type: 'exploration'
+            },
+            {
+                id: 'crypto-master',
+                name: '密码大师',
+                description: '征服密码学节点的所有挑战',
+                icon: '⚡',
+                difficulty: 3,
+                hidden: false,
+                type: 'exploration'
+            },
+            {
+                id: 'quantum-explorer',
+                name: '量子探索者',
+                description: '解锁神秘的量子计算节点',
+                icon: '🔮',
+                difficulty: 4,
+                hidden: false,
+                type: 'exploration'
+            },
+            
+            // 收集成就
+            {
+                id: 'clue-collector',
+                name: '线索收集者',
+                description: '收集5条重要线索',
+                icon: '🔍',
+                difficulty: 2,
+                hidden: false,
+                type: 'collection'
+            },
+            {
+                id: 'master-collector',
+                name: '收集大师',
+                description: '收集所有可用线索',
+                icon: '📚',
+                difficulty: 3,
+                hidden: false,
+                type: 'collection'
+            },
+            
+            // 技能成就
+            {
+                id: 'puzzle-solver',
+                name: '解谜专家',
+                description: '连续解开3个谜题',
+                icon: '🧩',
+                difficulty: 2,
+                hidden: false,
+                type: 'skill'
+            },
+            {
+                id: 'speed-runner',
+                name: '极速探险家',
+                description: '在30分钟内完成全部探索',
+                icon: '⚡',
+                difficulty: 4,
+                hidden: false,
+                type: 'skill'
+            },
+            
+            // 隐藏成就
+            {
+                id: 'night-owl',
+                name: '夜猫子',
+                description: '在深夜时分探索数字世界',
+                icon: '🌙',
+                difficulty: 2,
+                hidden: true,
+                type: 'special'
+            },
+            {
+                id: 'persistent-explorer',
+                name: '坚持不懈',
+                description: '连续游戏超过1小时',
+                icon: '💪',
+                difficulty: 3,
+                hidden: true,
+                type: 'special'
+            },
+            {
+                id: 'perfect-explorer',
+                name: '完美探索者',
+                description: '以100%完成度通关游戏',
+                icon: '👑',
+                difficulty: 5,
+                hidden: true,
+                type: 'master'
+            },
+            {
+                id: 'legend',
+                name: '数字传奇',
+                description: '获得所有其他成就',
+                icon: '🌟',
+                difficulty: 5,
+                hidden: true,
+                type: 'master'
+            }
+        ];
+
+        // 线索数据
+        const cluesData = [
+            {
+                id: 'hub-clue-1',
+                name: '网络基础',
+                description: 'IP 地址由四个 0-255 的数字组成，如 192.168.1.1',
+                icon: '🌐'
+            },
+            {
+                id: 'data-clue-1',
+                name: '数据存储',
+                description: '1 TB = 1024 GB = 1,099,511,627,776 字节',
+                icon: '💾'
+            },
+            {
+                id: 'security-clue-1',
+                name: '加密基础',
+                description: '对称加密使用同一把密钥加密和解密数据',
+                icon: '🔒'
+            },
+            {
+                id: 'ai-clue-1',
+                name: '机器学习',
+                description: 'AI 训练需要大量标注数据来提高准确性',
+                icon: '🤖'
+            },
+            {
+                id: 'crypto-clue-1',
+                name: '哈希函数',
+                description: 'SHA-256 生成 64 字符的十六进制哈希值',
+                icon: '⚡'
+            },
+            {
+                id: 'quantum-clue-1',
+                name: '量子叠加',
+                description: '量子比特可以同时处于0和1的叠加状态',
+                icon: '🔮'
+            },
+            {
+                id: 'network-clue-1',
+                name: '网络协议',
+                description: 'TCP/IP 是互联网通信的基础协议栈',
+                icon: '🌐'
+            },
+            {
+                id: 'future-clue-1',
+                name: '未来科技',
+                description: '量子计算机将彻底改变密码学和计算领域',
+                icon: '🚀'
+            }
+        ];
+
+        // 探索节点数据
+        const explorationNodesData = {
+            'main-hub': [
+                {
+                    id: 'hub-node-1',
+                    title: '系统控制台',
+                    description: '一个闪烁的控制台显示着系统状态。你注意到有一行凯撒密码加密的消息。',
+                    icon: '💻',
+                    action: '解密消息',
+                    puzzle: {
+                        type: 'caesar',
+                        question: '解密这条消息：GUVF VF N FRPERG ZRFFNTR',
+                        answer: 'THIS IS A SECRET MESSAGE',
+                        hint: '尝试将每个字母向前移动13位'
+                    },
+                    reward: {
+                        clue: 'hub-clue-1',
+                        unlock: ['data-center'],
+                        achievement: 'hub-explorer'
+                    }
+                }
+            ],
+            'data-center': [
+                {
+                    id: 'data-node-1',
+                    title: '数据库服务器',
+                    description: '巨大的服务器机房，数据在光纤中流淌。你需要解读一串二进制代码。',
+                    icon: '🗄️',
+                    action: '解析数据',
+                    puzzle: {
+                        type: 'binary',
+                        question: '将二进制转换为文本：01000100 01000001 01010100 01000001',
+                        answer: 'DATA',
+                        hint: '每8位二进制代表一个ASCII字符'
+                    },
+                    reward: {
+                        clue: 'data-clue-1',
+                        unlock: ['security-center'],
+                        achievement: 'data-miner'
+                    }
+                }
+            ],
+            'security-center': [
+                {
+                    id: 'security-node-1',
+                    title: '防火墙系统',
+                    description: '多层安全防护系统正在运行。你需要找到正确的端口号组合。',
+                    icon: '🛡️',
+                    action: '破解防护',
+                    puzzle: {
+                        type: 'math',
+                        question: '计算：2^10 + 2^8 + 2^4 = ?',
+                        answer: '1296',
+                        hint: '这是计算机中常见的端口号计算'
+                    },
+                    reward: {
+                        clue: 'security-clue-1',
+                        unlock: ['ai-center'],
+                        achievement: 'security-guru'
+                    }
+                }
+            ],
+            'ai-center': [
+                {
+                    id: 'ai-node-1',
+                    title: 'AI 核心处理器',
+                    description: '人工智能的核心正在高速运算。你需要完成一个模式识别任务。',
+                    icon: '🧠',
+                    action: '激活AI',
+                    puzzle: {
+                        type: 'pattern',
+                        question: '找出规律：2, 4, 8, 16, ?',
+                        answer: '32',
+                        hint: '每个数字都是前一个数字的两倍'
+                    },
+                    reward: {
+                        clue: 'ai-clue-1',
+                        unlock: ['crypto-center'],
+                        achievement: 'ai-pioneer'
+                    }
+                }
+            ],
+            'crypto-center': [
+                {
+                    id: 'crypto-node-1',
+                    title: '加密算法库',
+                    description: '各种密码学算法在这里汇聚。你面前是一个复杂的哈希挑战。',
+                    icon: '🔐',
+                    action: '解密算法',
+                    puzzle: {
+                        type: 'hash',
+                        question: '这个MD5值对应什么单词：5d41402abc4b2a76b9719d911017c592',
+                        answer: 'hello',
+                        hint: '这是一个常见的英文问候语'
+                    },
+                    reward: {
+                        clue: 'crypto-clue-1',
+                        unlock: ['quantum-center'],
+                        achievement: 'crypto-master'
+                    }
+                }
+            ],
+            'quantum-center': [
+                {
+                    id: 'quantum-node-1',
+                    title: '量子计算核心',
+                    description: '量子比特在这里进行着超越经典物理的计算。解开这个量子谜题。',
+                    icon: '⚛️',
+                    action: '启动量子计算',
+                    puzzle: {
+                        type: 'quantum',
+                        question: '在量子叠加状态中，一个量子比特可以表示多少种状态？',
+                        answer: '2',
+                        hint: '量子比特可以同时处于0和1状态'
+                    },
+                    reward: {
+                        clue: 'quantum-clue-1',
+                        achievement: 'quantum-explorer'
+                    }
+                }
+            ]
+        };
+
+        // 网络地图节点配置
+        const networkNodes = [
+            { id: 'main-hub', name: '主枢纽', icon: '🌐', x: 300, y: 200, connections: ['data-center'] },
+            { id: 'data-center', name: '数据中心', icon: '💾', x: 150, y: 100, connections: ['security-center'] },
+            { id: 'security-center', name: '安全中心', icon: '🔒', x: 450, y: 100, connections: ['ai-center'] },
+            { id: 'ai-center', name: 'AI中心', icon: '🤖', x: 100, y: 300, connections: ['crypto-center'] },
+            { id: 'crypto-center', name: '密码中心', icon: '⚡', x: 500, y: 300, connections: ['quantum-center'] },
+            { id: 'quantum-center', name: '量子中心', icon: '🔮', x: 300, y: 400, connections: [] }
+        ];
+
+        // 初始化游戏
+        function initGame() {
+            loadGameState();
+            createMatrixBackground();
+            updateUI();
+            checkAchievement('first-step');
+        }
+
+        // 创建矩阵背景效果
+        function createMatrixBackground() {
+            const background = document.getElementById('matrix-background');
+            const chars = '01';
+            
+            for (let i = 0; i < 50; i++) {
+                const span = document.createElement('span');
+                span.textContent = chars[Math.floor(Math.random() * chars.length)];
+                span.style.position = 'absolute';
+                span.style.left = Math.random() * 100 + '%';
+                span.style.top = Math.random() * 100 + '%';
+                span.style.fontSize = Math.random() * 20 + 10 + 'px';
+                span.style.color = `rgba(0, 255, 136, ${Math.random() * 0.5 + 0.1})`;
+                span.style.animation = `float ${Math.random() * 3 + 2}s infinite ease-in-out`;
+                span.style.animationDelay = Math.random() * 2 + 's';
+                background.appendChild(span);
+                
+                // 创建粒子效果
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 3 + 's';
+                background.appendChild(particle);
+            }
+        }
+
+        // 开始游戏
+        function startGame() {
+            document.getElementById('splash-screen').style.display = 'none';
+            document.getElementById('main-interface').style.display = 'block';
+            
+            if (!gameState.startTime) {
+                gameState.startTime = Date.now();
+                gameState.lastPlayTime = Date.now();
+                saveGameState();
+            }
+            
+            initNetworkMap();
+            initAchievements();
+            updateUI();
+            
+            // 检查夜猫子成就
+            const hour = new Date().getHours();
+            if (hour >= 22 || hour <= 6) {
+                checkAchievement('night-owl');
+            }
+        }
+
+        // 显示游戏指南
+        function showInstructions() {
+            const modal = document.getElementById('instructions-modal');
+            const content = document.getElementById('instructions-content');
+            
+            content.innerHTML = `
+                <div style="line-height: 1.6;">
+                    <h3>🎯 游戏目标</h3>
+                    <p>探索数字世界的六个核心节点，解开各种科技谜题，收集线索，获得成就。</p>
+                    
+                    <h3>🎮 游戏玩法</h3>
+                    <ul>
+                        <li><strong>节点探索</strong>：点击网络地图上的节点进行探索</li>
+                        <li><strong>谜题解答</strong>：每个节点都有独特的科技谜题等待解决</li>
+                        <li><strong>线索收集</strong>：成功解谜后获得有价值的科技线索</li>
+                        <li><strong>成就系统</strong>：完成特定任务解锁各种成就勋章</li>
+                    </ul>
+                    
+                    <h3>🧩 谜题类型</h3>
+                    <ul>
+                        <li><strong>凯撒密码</strong>：经典的字母替换加密</li>
+                        <li><strong>二进制转换</strong>：将二进制代码转换为文本</li>
+                        <li><strong>数学计算</strong>：计算机科学中的数学问题</li>
+                        <li><strong>模式识别</strong>：找出数字或符号的规律</li>
+                        <li><strong>哈希解密</strong>：破解常见的哈希值</li>
+                        <li><strong>量子计算</strong>：量子物理相关的概念题</li>
+                    </ul>
+                    
+                    <h3>🏆 成就系统</h3>
+                    <p>游戏包含15个成就，分为不同类型：</p>
+                    <ul>
+                        <li><strong>基础成就</strong>：完成基本游戏流程</li>
+                        <li><strong>探索成就</strong>：解锁并完成所有节点</li>
+                        <li><strong>收集成就</strong>：收集线索和信息</li>
+                        <li><strong>技能成就</strong>：展示解谜技巧</li>
+                        <li><strong>隐藏成就</strong>：特殊条件触发</li>
+                        <li><strong>大师成就</strong>：终极挑战</li>
+                    </ul>
+                    
+                    <h3>💡 游戏提示</h3>
+                    <ul>
+                        <li>仔细阅读每个节点的描述，其中包含解谜线索</li>
+                        <li>如果遇到困难，可以查看谜题提示</li>
+                        <li>收集的线索会帮助你理解科技概念</li>
+                        <li>尝试在不同时间游戏可能触发隐藏成就</li>
+                        <li>追求100%完成度以获得最高荣誉</li>
+                    </ul>
+                </div>
+            `;
+            
+            modal.style.display = 'flex';
+        }
+
+        // 显示成就墙
+        function showAchievementWall() {
+            const modal = document.getElementById('achievement-wall-modal');
+            const content = document.getElementById('achievement-wall-content');
+            
+            content.innerHTML = '<div id="full-achievement-wall"></div>';
+            renderFullAchievementWall();
+            
+            modal.style.display = 'flex';
+        }
+
+        // 渲染完整成就墙
+        function renderFullAchievementWall() {
+            const container = document.getElementById('full-achievement-wall');
+            if (!container) return;
+            
+            container.innerHTML = `
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <h3>🏆 成就收藏墙</h3>
+                    <p>获得成就：${gameState.achievements.length}/${achievementsData.length}</p>
+                    <div class="progress-bar" style="margin: 10px auto; width: 300px;">
+                        <div class="progress-fill" style="width: ${(gameState.achievements.length / achievementsData.length * 100)}%"></div>
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 15px; padding: 20px;">
+                    ${achievementsData.map(achievement => {
+                        const isUnlocked = gameState.achievements.includes(achievement.id);
+                        const difficultyStars = '⭐'.repeat(achievement.difficulty);
+                        
+                        return `
+                            <div class="achievement-badge ${isUnlocked ? 'unlocked' : 'locked'}" 
+                                 style="width: 120px; height: 140px; border-radius: 10px; padding: 15px;"
+                                 title="${achievement.description}">
+                                <div class="achievement-icon" style="font-size: 2.5em;">${achievement.icon}</div>
+                                <div class="achievement-name" style="font-size: 0.8em; margin-top: 10px;">${achievement.name}</div>
+                                <div style="font-size: 0.7em; margin-top: 5px; ${isUnlocked ? 'color: #333;' : 'color: #999;'}">${difficultyStars}</div>
+                                ${!isUnlocked && achievement.hidden ? 
+                                    '<div style="font-size: 0.6em; color: #666; margin-top: 5px;">隐藏成就</div>' : ''}
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        }
+
+        // 初始化网络地图
+        function initNetworkMap() {
+            const mapContainer = document.getElementById('network-map');
+            mapContainer.innerHTML = '';
+            
+            // 创建连接线
+            networkNodes.forEach(node => {
+                node.connections.forEach(targetId => {
+                    const target = networkNodes.find(n => n.id === targetId);
+                    if (target) {
+                        createConnection(node, target);
+                    }
+                });
+            });
+            
+            // 创建节点
+            networkNodes.forEach(node => {
+                createNode(node);
+            });
+        }
+
+        // 创建节点
+        function createNode(nodeData) {
+            const node = document.createElement('div');
+            node.className = 'node';
+            node.id = nodeData.id;
+            node.style.left = nodeData.x + 'px';
+            node.style.top = nodeData.y + 'px';
+            
+            const isUnlocked = gameState.unlockedNodes.includes(nodeData.id);
+            const isCompleted = gameState.completedNodes.includes(nodeData.id);
+            
+            if (isCompleted) {
+                node.classList.add('completed');
+            } else if (isUnlocked) {
+                node.classList.add('unlocked');
+            } else {
+                node.classList.add('locked');
+            }
+            
+            node.innerHTML = `
+                <div class="node-icon">${nodeData.icon}</div>
+                <div class="node-label">${nodeData.name}</div>
+            `;
+            
+            if (isUnlocked) {
+                node.addEventListener('click', () => openNode(nodeData.id));
+            }
+            
+            document.getElementById('network-map').appendChild(node);
+        }
+
+        // 创建连接线
+        function createConnection(fromNode, toNode) {
+            const connection = document.createElement('div');
+            connection.className = 'connection';
+            
+            const dx = toNode.x - fromNode.x;
+            const dy = toNode.y - fromNode.y;
+            const length = Math.sqrt(dx * dx + dy * dy);
+            const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+            
+            connection.style.left = (fromNode.x + 40) + 'px';
+            connection.style.top = (fromNode.y + 40) + 'px';
+            connection.style.width = length + 'px';
+            connection.style.transform = `rotate(${angle}deg)`;
+            
+            if (gameState.unlockedNodes.includes(toNode.id)) {
+                connection.classList.add('unlocked');
+            }
+            
+            document.getElementById('network-map').appendChild(connection);
+        }
+
+        // 打开节点
+        function openNode(nodeId) {
+            if (!gameState.unlockedNodes.includes(nodeId)) return;
+            
+            const nodeData = networkNodes.find(n => n.id === nodeId);
+            const explorationData = explorationNodesData[nodeId];
+            
+            if (!explorationData || explorationData.length === 0) {
+                showMessage('这个节点暂时没有可探索的内容。', 'info');
+                return;
+            }
+            
+            gameState.currentNode = nodeId;
+            const exploration = explorationData[0]; // 简化：每个节点只有一个探索点
+            
+            const modal = document.getElementById('node-modal');
+            const title = document.getElementById('modal-title');
+            const body = document.getElementById('modal-body');
+            
+            title.textContent = `${nodeData.icon} ${exploration.title}`;
+            
+            body.innerHTML = `
+                <div style="margin-bottom: 20px;">
+                    <p style="color: #00ff88; line-height: 1.6;">${exploration.description}</p>
+                </div>
+                <div style="background: rgba(0, 255, 136, 0.1); padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+                    <h4 style="color: #00ff88; margin-bottom: 10px;">🧩 ${exploration.puzzle.type.toUpperCase()} 谜题</h4>
+                    <p style="margin-bottom: 15px;">${exploration.puzzle.question}</p>
+                    <input type="text" id="puzzle-answer" placeholder="输入你的答案..." 
+                           style="width: 100%; padding: 10px; background: #1a1a2e; border: 1px solid #00ff88; 
+                                  border-radius: 5px; color: #00ff88; font-family: inherit;">
+                    <div style="margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button class="game-btn" onclick="checkPuzzleAnswer('${exploration.id}')">提交答案</button>
+                        <button class="game-btn" onclick="showHint('${exploration.puzzle.hint}')">💡 提示</button>
+                    </div>
+                </div>
+            `;
+            
+            modal.style.display = 'flex';
+            document.getElementById('puzzle-answer').focus();
+            
+            // 支持回车键提交
+            document.getElementById('puzzle-answer').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    checkPuzzleAnswer(exploration.id);
+                }
+            });
+        }
+
+        // 检查谜题答案
+        function checkPuzzleAnswer(explorationId) {
+            const answer = document.getElementById('puzzle-answer').value.trim().toUpperCase();
+            const currentNodeData = explorationNodesData[gameState.currentNode];
+            const exploration = currentNodeData.find(e => e.id === explorationId);
+            
+            if (!exploration) return;
+            
+            if (answer === exploration.puzzle.answer.toUpperCase()) {
+                // 答案正确
+                showMessage('🎉 恭喜！答案正确！', 'success');
+                
+                // 给予奖励
+                if (exploration.reward.clue) {
+                    addClue(exploration.reward.clue);
+                }
+                
+                if (exploration.reward.unlock) {
+                    exploration.reward.unlock.forEach(nodeId => {
+                        if (!gameState.unlockedNodes.includes(nodeId)) {
+                            gameState.unlockedNodes.push(nodeId);
+                            showMessage(`🌟 新节点已解锁：${networkNodes.find(n => n.id === nodeId)?.name}`, 'info');
+                        }
+                    });
+                }
+                
+                if (exploration.reward.achievement) {
+                    checkAchievement(exploration.reward.achievement);
+                }
+                
+                // 标记节点为已完成
+                if (!gameState.completedNodes.includes(gameState.currentNode)) {
+                    gameState.completedNodes.push(gameState.currentNode);
+                }
+                
+                // 检查其他成就
+                checkProgressAchievements();
+                
+                saveGameState();
+                updateUI();
+                closeModal();
+                initNetworkMap(); // 刷新地图
+                
+            } else {
+                showMessage('❌ 答案不正确，请再试一次。', 'error');
+                document.getElementById('puzzle-answer').value = '';
+                document.getElementById('puzzle-answer').focus();
+            }
+        }
+
+        // 显示提示
+        function showHint(hint) {
+            showMessage(`💡 提示：${hint}`, 'info');
+        }
+
+        // 检查进度相关成就
+        function checkProgressAchievements() {
+            // 检查线索收集成就
+            if (gameState.clues.length >= 5) {
+                checkAchievement('clue-collector');
+            }
+            if (gameState.clues.length >= cluesData.length) {
+                checkAchievement('master-collector');
+            }
+            
+            // 检查解谜成就
+            if (gameState.completedNodes.length >= 3) {
+                checkAchievement('puzzle-solver');
+            }
+            
+            // 检查完美探索者
+            if (gameState.completedNodes.length >= networkNodes.length && 
+                gameState.clues.length >= cluesData.length) {
+                checkAchievement('perfect-explorer');
+            }
+            
+            // 检查速度成就
+            if (gameState.startTime && gameState.completedNodes.length >= networkNodes.length) {
+                const playTime = (Date.now() - gameState.startTime) / 1000 / 60; // 分钟
+                if (playTime <= 30) {
+                    checkAchievement('speed-runner');
+                }
+            }
+            
+            // 检查持续游戏成就
+            if (gameState.lastPlayTime) {
+                const sessionTime = (Date.now() - gameState.lastPlayTime) / 1000 / 60; // 分钟
+                if (sessionTime >= 60) {
+                    checkAchievement('persistent-explorer');
+                }
+            }
+            
+            // 检查传奇成就
+            const totalAchievements = achievementsData.length;
+            if (gameState.achievements.length >= totalAchievements - 1) { // 除了传奇成就本身
+                checkAchievement('legend');
+            }
+        }
+
+        // 添加线索
+        function addClue(clueId) {
+            if (!gameState.clues.includes(clueId)) {
+                gameState.clues.push(clueId);
+                const clue = cluesData.find(c => c.id === clueId);
+                if (clue) {
+                    showMessage(`🔍 获得新线索：${clue.name}`, 'info');
+                }
+            }
+        }
+
+        // 解锁成就
+        function unlockAchievement(achievementId) {
+            try {
+                if (!gameState.achievements.includes(achievementId)) {
+                    gameState.achievements.push(achievementId);
+                    const achievement = achievementsData.find(a => a.id === achievementId);
+                    if (achievement) {
+                        showAchievementNotification(achievement);
+                        updateAchievements();
+                        saveGameState();
+                    }
+                }
+            } catch (error) {
+                console.error('Error unlocking achievement:', error);
+            }
+        }
+
+        // 显示成就通知
+        function showAchievementNotification(achievement) {
+            const notification = document.createElement('div');
+            notification.className = 'achievement-notification';
+            notification.innerHTML = `
+                <div class="title">🏆 成就解锁！</div>
+                <div><strong>${achievement.name}</strong></div>
+                <div style="font-size: 0.9em; margin-top: 5px;">${achievement.description}</div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => notification.classList.add('show'), 100);
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 500);
+            }, 3000);
+        }
+
+        // 检查成就
+        function checkAchievement(achievementId) {
+            try {
+                const achievement = achievementsData.find(a => a.id === achievementId);
+                if (!achievement || gameState.achievements.includes(achievementId)) return;
+                
+                switch(achievementId) {
+                    case 'first-step':
+                    case 'hub-explorer':
+                    case 'data-miner':
+                    case 'security-guru':
+                    case 'ai-pioneer':
+                    case 'crypto-master':
+                    case 'quantum-explorer':
+                    case 'clue-collector':
+                    case 'master-collector':
+                    case 'puzzle-solver':
+                    case 'night-owl':
+                    case 'speed-runner':
+                    case 'persistent-explorer':
+                    case 'perfect-explorer':
+                    case 'legend':
+                        unlockAchievement(achievementId);
+                        break;
+                }
+            } catch (error) {
+                console.error('Error checking achievement:', error);
+            }
+        }
+
+        // 初始化成就系统
+        function initAchievements() {
+            try {
+                updateAchievements();
+                if (gameState.clues.length === 0 && gameState.achievements.length === 0) {
+                    checkAchievement('first-step');
+                }
+            } catch (error) {
+                console.error('Error initializing achievements:', error);
+            }
+        }
+
+        // 更新成就显示
+        function updateAchievements() {
+            try {
+                const achievementWall = document.getElementById('achievement-wall');
+                if (!achievementWall) return;
+                
+                achievementWall.innerHTML = '';
+                
+                // 只显示前8个成就以适应面板大小
+                const visibleAchievements = achievementsData.slice(0, 8);
+                
+                visibleAchievements.forEach(achievement => {
+                    const achieved = gameState.achievements.includes(achievement.id);
+                    
+                    const badge = document.createElement('div');
+                    badge.className = `achievement-badge ${achieved ? 'unlocked' : 'locked'}`;
+                    badge.title = `${achievement.name}\n${achievement.description}`;
+                    
+                    badge.innerHTML = `
+                        <div class="achievement-icon">${achievement.icon}</div>
+                        <div class="achievement-name">${achievement.name}</div>
+                    `;
+                    
+                    achievementWall.appendChild(badge);
+                });
+                
+                // 更新成就进度
+                const percentage = Math.round((gameState.achievements.length / achievementsData.length) * 100);
+                const percentageElement = document.getElementById('achievement-percentage');
+                const progressBar = document.getElementById('achievement-progress-bar');
+                
+                if (percentageElement) percentageElement.textContent = percentage + '%';
+                if (progressBar) progressBar.style.width = percentage + '%';
+                
+            } catch (error) {
+                console.error('Error updating achievements:', error);
+            }
+        }
+
+        // 更新UI
+        function updateUI() {
+            // 更新进度信息
+            document.getElementById('nodes-progress').textContent = 
+                `${gameState.completedNodes.length}/${networkNodes.length}`;
+            document.getElementById('clues-progress').textContent = 
+                `${gameState.clues.length}/${cluesData.length}`;
+            document.getElementById('achievements-progress').textContent = 
+                `${gameState.achievements.length}/${achievementsData.length}`;
+            
+            // 更新线索面板
+            updateCluesPanel();
+            
+            // 更新进度面板
+            updateProgressPanel();
+            
+            // 更新成就
+            updateAchievements();
+        }
+
+        // 更新线索面板
+        function updateCluesPanel() {
+            const container = document.getElementById('clues-container');
+            if (!container) return;
+            
+            container.innerHTML = '';
+            
+            if (gameState.clues.length === 0) {
+                container.innerHTML = '<p style="color: #666; text-align: center;">暂无收集到的线索</p>';
+                return;
+            }
+            
+            gameState.clues.forEach(clueId => {
+                const clue = cluesData.find(c => c.id === clueId);
+                if (clue) {
+                    const clueElement = document.createElement('div');
+                    clueElement.style.cssText = `
+                        background: rgba(0, 255, 136, 0.1);
+                        padding: 10px;
+                        margin-bottom: 10px;
+                        border-radius: 5px;
+                        border-left: 3px solid #00ff88;
+                    `;
+                    
+                    clueElement.innerHTML = `
+                        <div style="display: flex; align-items: center; margin-bottom: 5px;">
+                            <span style="font-size: 1.2em; margin-right: 8px;">${clue.icon}</span>
+                            <strong style="color: #00ff88;">${clue.name}</strong>
+                        </div>
+                        <p style="margin: 0; font-size: 0.9em; color: #ccc;">${clue.description}</p>
+                    `;
+                    
+                    container.appendChild(clueElement);
+                }
+            });
+        }
+
+        // 更新进度面板
+        function updateProgressPanel() {
+            const container = document.getElementById('progress-container');
+            if (!container) return;
+            
+            container.innerHTML = `
+                <div style="margin-bottom: 20px;">
+                    <h4 style="color: #00ff88; margin-bottom: 10px;">📍 节点探索</h4>
+                    ${networkNodes.map(node => {
+                        const isUnlocked = gameState.unlockedNodes.includes(node.id);
+                        const isCompleted = gameState.completedNodes.includes(node.id);
+                        let status = '🔒 未解锁';
+                        let color = '#666';
+                        
+                        if (isCompleted) {
+                            status = '✅ 已完成';
+                            color = '#ffd700';
+                        } else if (isUnlocked) {
+                            status = '🔓 已解锁';
+                            color = '#00ff88';
+                        }
+                        
+                        return `
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span>${node.icon} ${node.name}</span>
+                                <span style="color: ${color}; font-size: 0.8em;">${status}</span>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+                
+                <div>
+                    <h4 style="color: #00ff88; margin-bottom: 10px;">🎯 游戏统计</h4>
+                    <div style="font-size: 0.9em; line-height: 1.5;">
+                        <div>总游戏时间: ${getGameTimeString()}</div>
+                        <div>解锁节点: ${gameState.unlockedNodes.length}/${networkNodes.length}</div>
+                        <div>完成节点: ${gameState.completedNodes.length}/${networkNodes.length}</div>
+                        <div>收集线索: ${gameState.clues.length}/${cluesData.length}</div>
+                        <div>获得成就: ${gameState.achievements.length}/${achievementsData.length}</div>
+                        <div>完成度: ${Math.round(((gameState.completedNodes.length + gameState.clues.length + gameState.achievements.length) / (networkNodes.length + cluesData.length + achievementsData.length)) * 100)}%</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 获取游戏时间字符串
+        function getGameTimeString() {
+            if (!gameState.startTime) return '0分钟';
+            
+            const totalMinutes = Math.floor((Date.now() - gameState.startTime) / 1000 / 60);
+            const hours = Math.floor(totalMinutes / 60);
+            const minutes = totalMinutes % 60;
+            
+            if (hours > 0) {
+                return `${hours}小时${minutes}分钟`;
+            } else {
+                return `${minutes}分钟`;
+            }
+        }
+
+        // 切换面板标签
+        function switchTab(tabName) {
+            // 更新标签按钮
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // 更新面板内容
+            document.querySelectorAll('.panel-content').forEach(panel => panel.classList.remove('active'));
+            document.getElementById(`${tabName}-panel`).classList.add('active');
+        }
+
+        // 切换声音
+        function toggleSound() {
+            gameState.soundEnabled = !gameState.soundEnabled;
+            const btn = event.target;
+            btn.textContent = gameState.soundEnabled ? '🔊' : '🔇';
+            saveGameState();
+        }
+
+        // 显示统计
+        function showStats() {
+            const totalNodes = networkNodes.length;
+            const completedNodes = gameState.completedNodes.length;
+            const totalClues = cluesData.length;
+            const collectedClues = gameState.clues.length;
+            const totalAchievements = achievementsData.length;
+            const unlockedAchievements = gameState.achievements.length;
+            
+            const completionRate = Math.round(((completedNodes + collectedClues + unlockedAchievements) / 
+                                             (totalNodes + totalClues + totalAchievements)) * 100);
+            
+            showMessage(`
+                📊 游戏统计\n
+                节点完成: ${completedNodes}/${totalNodes}\n
+                线索收集: ${collectedClues}/${totalClues}\n
+                成就解锁: ${unlockedAchievements}/${totalAchievements}\n
+                总完成度: ${completionRate}%\n
+                游戏时间: ${getGameTimeString()}
+            `, 'info');
+        }
+
+        // 显示帮助
+        function showHelp() {
+            showMessage(`
+                ❓ 游戏帮助\n
+                • 点击解锁的节点进行探索\n
+                • 解答谜题以获得奖励\n
+                • 收集线索了解科技知识\n
+                • 完成挑战解锁成就\n
+                • 点击💡获取谜题提示
+            `, 'info');
+        }
+
+        // 返回主菜单
+        function returnToMenu() {
+            gameState.lastPlayTime = Date.now();
+            saveGameState();
+            document.getElementById('main-interface').style.display = 'none';
+            document.getElementById('splash-screen').style.display = 'flex';
+        }
+
+        // 关闭弹出框
+        function closeModal() {
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.style.display = 'none';
+            });
+        }
+
+        // 显示消息
+        function showMessage(message, type = 'info') {
+            const colors = {
+                info: '#00ff88',
+                success: '#00ff88',
+                error: '#ff4444',
+                warning: '#ffaa00'
+            };
+            
+            const messageDiv = document.createElement('div');
+            messageDiv.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: linear-gradient(135deg, #1a1a2e 0%, #0f0f1a 100%);
+                color: ${colors[type]};
+                padding: 20px;
+                border-radius: 8px;
+                border: 2px solid ${colors[type]};
+                z-index: 2000;
+                max-width: 400px;
+                text-align: center;
+                box-shadow: 0 0 30px rgba(0, 255, 136, 0.3);
+                white-space: pre-line;
+            `;
+            
+            messageDiv.textContent = message;
+            document.body.appendChild(messageDiv);
+            
+            setTimeout(() => {
+                if (messageDiv.parentNode) {
+                    messageDiv.parentNode.removeChild(messageDiv);
+                }
+            }, 3000);
+        }
+
+        // 保存游戏状态
+        function saveGameState() {
+            try {
+                localStorage.setItem('digitalRealm_gameState', JSON.stringify(gameState));
+            } catch (error) {
+                console.error('Error saving game state:', error);
+            }
+        }
+
+        // 加载游戏状态
+        function loadGameState() {
+            try {
+                const saved = localStorage.getItem('digitalRealm_gameState');
+                if (saved) {
+                    const loadedState = JSON.parse(saved);
+                    gameState = { ...gameState, ...loadedState };
+                }
+            } catch (error) {
+                console.error('Error loading game state:', error);
+            }
+        }
+
+        // 点击外部关闭弹出框
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal')) {
+                closeModal();
+            }
+        });
+
+        // 键盘快捷键
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+
+        // 页面加载完成时初始化
+        document.addEventListener('DOMContentLoaded', initGame);
+
+        // 页面卸载时保存状态
+        window.addEventListener('beforeunload', () => {
+            if (gameState.lastPlayTime) {
+                gameState.lastPlayTime = Date.now();
+                saveGameState();
+            }
+        });
+
+        // ========== 成就墙导出功能 ==========
+        
+        // 成就墙导出功能
+        function exportAchievementWall() {
+            // 创建canvas元素
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // 设置画布大小
+            canvas.width = 800;
+            canvas.height = 600;
+            
+            // 设置背景
+            const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+            gradient.addColorStop(0, '#0a0a12');
+            gradient.addColorStop(1, '#1a1a2e');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 添加边框
+            ctx.strokeStyle = '#00ff88';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(10, 10, canvas.width - 20, canvas.height - 20);
+            
+            // 标题
+            ctx.fillStyle = '#00ff88';
+            ctx.font = 'bold 28px "Courier New", monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText('🏆 数字秘境 - 成就墙', canvas.width / 2, 60);
+            
+            // 副标题
+            ctx.font = '16px "Courier New", monospace';
+            ctx.fillStyle = '#00cc7a';
+            const achievementCount = gameState.achievements.length;
+            const totalAchievements = achievementsData.length;
+            const percentage = Math.round((achievementCount / totalAchievements) * 100);
+            ctx.fillText(`完成度: ${achievementCount}/${totalAchievements} (${percentage}%)`, canvas.width / 2, 90);
+            
+            // 绘制成就格子
+            const gridCols = 5;
+            const gridRows = 3;
+            const achievementSize = 80;
+            const spacing = 20;
+            const startX = (canvas.width - (gridCols * achievementSize + (gridCols - 1) * spacing)) / 2;
+            const startY = 120;
+            
+            let achievementIndex = 0;
+            
+            for (let row = 0; row < gridRows; row++) {
+                for (let col = 0; col < gridCols; col++) {
+                    if (achievementIndex >= achievementsData.length) break;
+                    
+                    const achievement = achievementsData[achievementIndex];
+                    const isUnlocked = gameState.achievements.includes(achievement.id);
+                    
+                    const x = startX + col * (achievementSize + spacing);
+                    const y = startY + row * (achievementSize + spacing);
+                    
+                    // 绘制成就背景
+                    ctx.save();
+                    if (isUnlocked) {
+                        // 已解锁 - 金色渐变
+                        const badgeGradient = ctx.createRadialGradient(x + achievementSize/2, y + achievementSize/2, 0, 
+                                                             x + achievementSize/2, y + achievementSize/2, achievementSize/2);
+                        badgeGradient.addColorStop(0, '#ffd700');
+                        badgeGradient.addColorStop(1, '#ffed4e');
+                        ctx.fillStyle = badgeGradient;
+                        ctx.strokeStyle = '#ffd700';
+                    } else {
+                        // 未解锁 - 灰色
+                        const badgeGradient = ctx.createRadialGradient(x + achievementSize/2, y + achievementSize/2, 0, 
+                                                             x + achievementSize/2, y + achievementSize/2, achievementSize/2);
+                        badgeGradient.addColorStop(0, '#444');
+                        badgeGradient.addColorStop(1, '#222');
+                        ctx.fillStyle = badgeGradient;
+                        ctx.strokeStyle = '#666';
+                    }
+                    
+                    // 绘制圆形背景
+                    ctx.beginPath();
+                    ctx.arc(x + achievementSize/2, y + achievementSize/2, achievementSize/2 - 5, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    
+                    // 绘制成就图标
+                    ctx.font = '24px "Courier New", monospace';
+                    ctx.fillStyle = isUnlocked ? '#333' : '#999';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(achievement.icon, x + achievementSize/2, y + achievementSize/2 + 8);
+                    
+                    // 绘制难度星级
+                    const stars = '⭐'.repeat(achievement.difficulty);
+                    ctx.font = '8px "Courier New", monospace';
+                    ctx.fillText(stars, x + achievementSize/2, y + achievementSize - 8);
+                    
+                    ctx.restore();
+                    achievementIndex++;
+                }
+            }
+            
+            // 添加底部信息
+            ctx.fillStyle = '#00ff88';
+            ctx.font = '12px "Courier New", monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText('数字秘境 - 终极科技解谜之旅', canvas.width / 2, canvas.height - 40);
+            ctx.fillText(`导出时间: ${new Date().toLocaleString()}`, canvas.width / 2, canvas.height - 20);
+            
+            return canvas;
+        }
+
+        // 下载成就墙图片
+        function downloadAchievementWall() {
+            try {
+                const canvas = exportAchievementWall();
+                
+                // 创建下载链接
+                const link = document.createElement('a');
+                link.download = `数字秘境_成就墙_${new Date().toISOString().split('T')[0]}.png`;
+                link.href = canvas.toDataURL('image/png');
+                
+                // 触发下载
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                showMessage('🎉 成就墙导出成功！', 'success');
+            } catch (error) {
+                console.error('Export error:', error);
+                showMessage('❌ 导出失败，请重试', 'error');
+            }
+        }
+
+        // 分享成就墙（生成分享文本）
+        function shareAchievementWall() {
+            const achievementCount = gameState.achievements.length;
+            const totalAchievements = achievementsData.length;
+            const percentage = Math.round((achievementCount / totalAchievements) * 100);
+            
+            // 生成成就emoji网格
+            let achievementGrid = '';
+            const gridCols = 5;
+            
+            for (let i = 0; i < achievementsData.length; i++) {
+                if (i > 0 && i % gridCols === 0) {
+                    achievementGrid += '\n';
+                }
+                
+                const achievement = achievementsData[i];
+                const isUnlocked = gameState.achievements.includes(achievement.id);
+                achievementGrid += isUnlocked ? achievement.icon : '🔒';
+            }
+            
+            const shareText = `🏆 我在《数字秘境》中的成就墙！
+            
+完成度: ${achievementCount}/${totalAchievements} (${percentage}%)
+
+${achievementGrid}
+
+🎮 数字秘境 - 终极科技解谜之旅
+⚡ 探索数字世界，挑战科技谜题！`;
+
+            // 复制到剪贴板
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(shareText).then(() => {
+                    showMessage('📋 成就墙文本已复制到剪贴板！', 'success');
+                }).catch(() => {
+                    showShareModal(shareText);
+                });
+            } else {
+                showShareModal(shareText);
+            }
+        }
+
+        // 显示分享模态框
+        function showShareModal(shareText) {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.style.display = 'flex';
+            
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 class="modal-title">📤 分享成就墙</h2>
+                        <button class="close-btn" onclick="this.closest('.modal').remove()">&times;</button>
+                    </div>
+                    <div>
+                        <p>复制以下文本分享你的成就：</p>
+                        <textarea style="width: 100%; height: 200px; background: #1a1a2e; color: #00ff88; border: 1px solid #00ff88; border-radius: 5px; padding: 10px; font-family: 'Courier New', monospace;" readonly>${shareText}</textarea>
+                        <div style="margin-top: 15px; text-align: center;">
+                            <button class="game-btn" onclick="
+                                this.closest('.modal').querySelector('textarea').select();
+                                document.execCommand('copy');
+                                showMessage('📋 已复制到剪贴板！', 'success');
+                                this.closest('.modal').remove();
+                            ">📋 复制文本</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+
+        // 导出详细成就报告
+        function exportAchievementReport() {
+            const achievementCount = gameState.achievements.length;
+            const totalAchievements = achievementsData.length;
+            const percentage = Math.round((achievementCount / totalAchievements) * 100);
+            
+            let report = `# 数字秘境 - 个人成就报告
+
+## 📊 总体统计
+- **完成度**: ${achievementCount}/${totalAchievements} (${percentage}%)
+- **游戏时间**: ${getGameTimeString()}
+- **导出时间**: ${new Date().toLocaleString()}
+
+## 🏆 已获得成就
+
+`;
+
+            // 按类型分组显示成就
+            const achievementsByType = {
+                'basic': [],
+                'exploration': [],
+                'collection': [],
+                'skill': [],
+                'special': [],
+                'master': []
+            };
+            
+            gameState.achievements.forEach(achievementId => {
+                const achievement = achievementsData.find(a => a.id === achievementId);
+                if (achievement) {
+                    const type = achievement.type || 'basic';
+                    achievementsByType[type].push(achievement);
+                }
+            });
+            
+            const typeNames = {
+                'basic': '基础成就',
+                'exploration': '探索成就',
+                'collection': '收集成就',
+                'skill': '技能成就',
+                'special': '特殊成就',
+                'master': '大师成就'
+            };
+            
+            Object.keys(typeNames).forEach(type => {
+                if (achievementsByType[type].length > 0) {
+                    report += `### ${typeNames[type]}\n\n`;
+                    achievementsByType[type].forEach(achievement => {
+                        const stars = '⭐'.repeat(achievement.difficulty);
+                        report += `- **${achievement.icon} ${achievement.name}** ${stars}\n  ${achievement.description}\n\n`;
+                    });
+                }
+            });
+            
+            // 未获得的成就
+            const unlockedAchievements = achievementsData.filter(a => !gameState.achievements.includes(a.id));
+            if (unlockedAchievements.length > 0) {
+                report += `## 🔒 待解锁成就\n\n`;
+                unlockedAchievements.forEach(achievement => {
+                    if (!achievement.hidden) {
+                        const stars = '⭐'.repeat(achievement.difficulty);
+                        report += `- **${achievement.icon} ${achievement.name}** ${stars}\n  ${achievement.description}\n\n`;
+                    }
+                });
+                
+                const hiddenCount = unlockedAchievements.filter(a => a.hidden).length;
+                if (hiddenCount > 0) {
+                    report += `### 隐藏成就\n还有 ${hiddenCount} 个隐藏成就等待发现...\n\n`;
+                }
+            }
+            
+            report += `## 📈 游戏进度
+
+### 节点探索
+- **已解锁**: ${gameState.unlockedNodes.length}/${networkNodes.length}
+- **已完成**: ${gameState.completedNodes.length}/${networkNodes.length}
+
+### 线索收集
+- **已收集**: ${gameState.clues.length}/${cluesData.length}
+
+---
+*由数字秘境游戏自动生成*`;
+            
+            // 下载报告
+            const blob = new Blob([report], { type: 'text/markdown;charset=utf-8' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `数字秘境_成就报告_${new Date().toISOString().split('T')[0]}.md`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showMessage('📝 成就报告导出成功！', 'success');
+        }
+
+        // 显示导出菜单
+        function showExportMenu() {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.style.display = 'flex';
+            
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 class="modal-title">📤 导出成就墙</h2>
+                        <button class="close-btn" onclick="this.closest('.modal').remove()">&times;</button>
+                    </div>
+                    <div>
+                        <p>选择导出方式：</p>
+                        <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 20px;">
+                            <button class="game-btn" onclick="downloadAchievementWall(); this.closest('.modal').remove();">
+                                🖼️ 导出为图片
+                            </button>
+                            <button class="game-btn" onclick="shareAchievementWall(); this.closest('.modal').remove();">
+                                📱 分享文本格式
+                            </button>
+                            <button class="game-btn" onclick="exportAchievementReport(); this.closest('.modal').remove();">
+                                📝 导出详细报告
+                            </button>
+                        </div>
+                        <p style="font-size: 0.9em; color: #666; margin-top: 20px;">
+                            💡 提示：图片格式适合保存纪念，文本格式适合社交分享，详细报告包含完整游戏统计。
+                        </p>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+    </script>
+</body>
+</html>
